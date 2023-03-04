@@ -1,0 +1,1085 @@
+---
+title: "examenEstadistica2023"
+author: "Jose Valdes"
+date: "2023-02-15"
+output:
+  rmdformats::readthedown:
+    toc: 6
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+Se realiza validacion de la instalación de los paquetes necesarios para ejecutar el script
+
+```{r}
+rm(list = ls()) 
+
+# Bibliotecas a cargar
+
+
+check_packages <- function(packages) {
+  if (all(packages %in% rownames(installed.packages()))) {
+    TRUE
+  } else{
+    cat(
+      "Instalar los siguientes packages antes de ejecutar el presente script\n",
+      packages[!(packages %in% rownames(installed.packages()))],
+      "\n"
+    )
+  }
+}
+packages_needed <- c("repmis")
+
+# Se llama a la funcion check_packages
+check_packages(packages_needed)
+
+
+library(repmis)
+
+```
+# Ejercicio N° 1 - Estadística Descriptiva (15 puntos)
+Seleccione una base de datos pública de su interés y seleccione una muestra de n observaciones aleatorias al
+azar. Alternativamente, simule una muestra aleatoria simple de al menos 1000 registros.
+Para la entrega de este examen deberá adjuntar la muestra seleccionada y el procedimiento que permitir
+obtener los registros muestrales. A partir de la misma se solicita lo siguiente,
+
+Base de datos públicas a utilizar en el ejercicio:
+
+```{r}
+##Se comparte URL del archivo trabajado
+URLEjer1<-"https://d3c33hcgiwev3.cloudfront.net/1sf2mERLTmuH9phES65rBw_a8f877dcd6d84ca3b48e8390d40c74f1_Ordenes_productos_C1_M2.csv?Expires=1675641600&Signature=iVg7NljP9Bz3iZmt3LKXouVnrPxlN5TmuSB7ccYcV~cyUHVjqTX5zp-qVG8J7XSd6Td9ID5gzkC~eYn-PxAmVNgOj6QfdFNdcfy3WYQ~ISMgg6dfp2N~Y48dDpoglh5PuBeWCKA1dBRES3F3H2dHD-FntYvYic9L9-D84grVR-0_&Key-Pair-Id=APKAJLTNE6QMUY6HBC5A"
+#url_archivo <- paste(URLEjer1,"Ordenes_productos_C1_M2.csv", sep = ";")
+
+
+#Se carga el archivo de forma local, esto por no saber como cargado desde la web.
+file<-"C:/Users/Josvaldes/Documents/Maestria/Austral/1 ano/Estadistica/examen/Ordenes_productos_C1_M2.csv"
+ordenesProductosRetiel <- read.csv(file, sep = ";", header = TRUE)
+```
+
+Se procede con la selección de una muestra aleatoria al azar, prueba con 1000 registros:
+
+```{r}
+
+#se transforma la lista contenida en el objeto ordenesProductosRetiel en un data frame
+
+df<-data.frame(matrix(unlist(ordenesProductosRetiel), nrow = length(ordenesProductosRetiel), byrow = TRUE))
+
+
+#se selecciona una muestra aleatoria simple del data frame
+muestra1000registros <- df[sample(nrow(df), size=1000, replace = TRUE, prob = NULL)]
+
+#Se cambia los nombres de las variables a trabajar
+value <- c("orden_id","order_item_id","producto_id","vendedor_id","fecha_envio_limite","precio","valor_flete","codigo_postal_vendedor","ciudad_vendedor","departamento_vendedor","nombre_categoria_producto","longitud_nombre_producto","longitud_descripcion_producto","cantidad_fotos_producto","peso_g_producto","longitud_cm_producto","altura_cm_producto","ancho_cm_producto")
+
+row.names(muestra1000registros) <- value
+
+#Se usa la función de transpuesta para regresar las filas y las columnas a la estructura original y dejar el objeto como un data frame
+df00<-as.data.frame(t(muestra1000registros))
+
+```
+
+Debido a que las conversiones ocasionaron que el tipo de datos cambiara todo a carácter se hace la corrección de las columnas al tipo de dato del dataset original:
+
+```{r}
+df00$precio=as.numeric(df00$precio)
+df00$valor_flete=as.numeric(df00$valor_flete)
+df00$codigo_postal_vendedor=as.integer(df00$codigo_postal_vendedor)
+df00$longitud_nombre_producto=as.integer(df00$longitud_nombre_producto)
+df00$longitud_descripcion_producto=as.integer(df00$longitud_descripcion_producto)
+df00$cantidad_fotos_producto=as.integer(df00$cantidad_fotos_producto)
+df00$peso_g_producto=as.integer(df00$peso_g_producto)
+df00$longitud_cm_producto=as.integer(df00$longitud_cm_producto)
+df00$altura_cm_producto=as.integer(df00$altura_cm_producto)
+df00$ancho_cm_producto=as.integer(df00$ancho_cm_producto)
+str(df00)
+```
+
+Sobre el objeto ordenesProductosRetiel se entrega el dataset utilizado para el ejercicio y sobre el objeto df00 se entrega la muestra aleatoria simple de 1000 observaciones del dataset. 
+
+
+• Describir para este caso la población, la muestra tomada, el experimento que estará usando, las variables
+bajo análisis y cualquier otra característica relevante para el procedimiento. Si la base es simulada,
+exponga los motivos por los cuales el procedimiento es viable.
+
+
+```{r}
+#La población utilizada es la que esta en el dataset ordenesProductosRetiel las caracteristicas del objeto son las siguiente: 10134 obs. of  18 variables:
+str(ordenesProductosRetiel)
+#La muestra utilizada es la que esta en el objeto df00 las caracteristicas del objeto son las siguiente: 1000 obs. of  18 variables:
+str(df00)
+#El experimento que se usa es un muestreo aleatorio simple
+#las variables bajo análisis se describen en las salidas de la funcion str()
+
+```
+
+Como se obsservan en las salidas del dataset utilizado relacionado al sector retail, se tiene una base de 10134 observaciones y 18 variables, de esta población se realiza un muestreo aleatorio simple con el cual se toma una muestra aleatoria de 1000 observaciones.
+
+• Generar un set de estadística descriptiva sobre la misma que le permita resumir la información obtenida,
+explicando para cada una de ellas su significado.
+
+```{r}
+#Se valida el resumen de los datos del data frame (muestra)
+summary(df00)
+```
+Para un análisis más detallado se hace la revisión de cada una de las variables, se excluyen las cualitativas:
+
+Variable Precio
+
+```{r}
+#Población
+summary(ordenesProductosRetiel$precio)
+
+#muestra
+summary(df00$precio)
+```
+
+Variable valor flete
+
+```{r}
+#Población
+summary(ordenesProductosRetiel$valor_flete)
+
+#muestra
+summary(df00$valor_flete)
+```
+
+longitud_nombre_producto
+
+```{r}
+#Población
+summary(ordenesProductosRetiel$longitud_nombre_producto)
+
+#muestra
+summary(df00$longitud_nombre_producto)
+```
+
+longitud_descripcion_producto
+
+```{r}
+#Población
+summary(ordenesProductosRetiel$longitud_descripcion_producto)
+
+#muestra
+summary(df00$longitud_descripcion_producto)
+```
+
+cantidad_fotos_producto 
+
+```{r}
+#Población
+summary(ordenesProductosRetiel$cantidad_fotos_producto)
+
+#muestra
+summary(df00$cantidad_fotos_producto)
+```
+
+altura_cm_producto
+
+```{r}
+#Población
+summary(ordenesProductosRetiel$altura_cm_producto)
+
+#muestra
+summary(df00$altura_cm_producto)
+```
+
+ancho_cm_producto
+
+```{r}
+#Población
+summary(ordenesProductosRetiel$ancho_cm_producto)
+
+#muestra
+summary(df00$ancho_cm_producto)
+```
+
+
+• Generar un histograma para una de las variables cuantitativas, utilizando la forma que considere más
+correcta para agrupar las categorías. Elija la variable que mayor simetría consiga en el histograma
+resultante.
+
+Variable Precio
+
+```{r}
+#Histograma población
+hist(x = ordenesProductosRetiel$precio, main = "Histograma de precio - Población", 
+     xlab = "Precio", ylab = "Frecuencia",
+     col = "purple")
+
+#Histograma muestra
+hist(x = df00$precio, main = "Histograma de precio - Muestra", 
+     xlab = "Precio", ylab = "Frecuencia",
+     col = "purple")
+```
+
+Variable valor flete
+
+```{r}
+#Histograma población
+hist(x = ordenesProductosRetiel$valor_flete, main = "Histograma de valor flete - Población", 
+     xlab = "valor flete", ylab = "Frecuencia",
+     col = "purple")
+
+#Histograma muestra
+hist(x = df00$valor_flete, main = "Histograma de valor flete - Muestra", 
+     xlab = "valor flete", ylab = "Frecuencia",
+     col = "purple")
+```
+
+
+longitud_nombre_producto
+
+```{r}
+#Histograma población
+hist(x = ordenesProductosRetiel$longitud_nombre_producto, main = "Histograma de longitud_nombre_producto - Población", 
+     xlab = "longitud_nombre_producto", ylab = "Frecuencia",
+     col = "purple")
+
+#Histograma muestra
+hist(x = df00$longitud_nombre_producto, main = "Histograma de longitud_nombre_producto - Muestra", 
+     xlab = "longitud_nombre_producto", ylab = "Frecuencia",
+     col = "purple")
+```
+
+longitud_descripcion_producto
+
+```{r}
+#Histograma población
+hist(x = ordenesProductosRetiel$longitud_descripcion_producto, main = "Histograma de longitud_descripcion_producto - Población", 
+     xlab = "longitud_descripcion_producto", ylab = "Frecuencia",
+     col = "purple")
+
+#Histograma muestra
+hist(x = df00$longitud_nombre_producto, main = "Histograma de longitud_descripcion_producto - Muestra", 
+     xlab = "longitud_descripcion_producto", ylab = "Frecuencia",
+     col = "purple")
+```
+
+cantidad_fotos_producto 
+
+```{r}
+#Histograma población
+hist(x = ordenesProductosRetiel$cantidad_fotos_producto, main = "Histograma de cantidad_fotos_producto - Población", 
+     xlab = "cantidad_fotos_producto", ylab = "Frecuencia",
+     col = "purple")
+
+#Histograma muestra
+hist(x = df00$cantidad_fotos_producto, main = "Histograma de cantidad_fotos_producto - Muestra", 
+     xlab = "cantidad_fotos_producto", ylab = "Frecuencia",
+     col = "purple")
+```
+
+altura_cm_producto
+
+```{r}
+#Histograma población
+hist(x = ordenesProductosRetiel$altura_cm_producto, main = "Histograma de altura_cm_producto - Población", 
+     xlab = "altura_cm_producto", ylab = "Frecuencia",
+     col = "purple")
+
+#Histograma muestra
+hist(x = df00$altura_cm_producto, main = "Histograma de altura_cm_producto - Muestra", 
+     xlab = "altura_cm_producto", ylab = "Frecuencia",
+     col = "purple")
+```
+
+ancho_cm_producto
+
+```{r}
+#Histograma población
+hist(x = ordenesProductosRetiel$ancho_cm_producto, main = "Histograma de ancho_cm_producto - Población", 
+     xlab = "ancho_cm_producto", ylab = "Frecuencia",
+     col = "purple")
+
+#Histograma muestra
+hist(x = df00$ancho_cm_producto, main = "Histograma de ancho_cm_producto - Muestra", 
+     xlab = "ancho_cm_producto", ylab = "Frecuencia",
+     col = "purple")
+```
+
+
+Como se observa en las imágenes anteriores, las variables cuantitativas que presenta mayor simetría son:
+
+•	longitud_nombre_producto
+•	longitud_descripcion_producto
+•	cantidad_fotos_producto
+
+Estas variables representan aspectos del producto que no son significativos, para observar características relevantes se toman gráficos en boxplot de las siguientes variables:
+
+•	precio
+• valor flete
+• altura_cm_producto
+ancho_cm_producto
+
+```{r}
+# Boxplot precio, Valor Flete, altura_cm_producto y ancho_cm_producto - Población
+boxplot(ordenesProductosRetiel$precio, ordenesProductosRetiel$valor_flete, ordenesProductosRetiel$altura_cm_producto, ordenesProductosRetiel$ancho_cm_producto)
+
+# Boxplot precio, Valor Flete, altura_cm_producto y ancho_cm_producto - muestra
+boxplot(df00$precio, df00$valor_flete, df00$altura_cm_producto, df00$ancho_cm_producto)
+```
+
+Como se observa en las salidas, los boxplots de la población no se alcanzan a visualizar para determinar cual variables es mas simétrica, pero al revisar las salidas de la muestra se observa que la tercera variables (altura_cm_producto) es la variables cuantitativa que representa mayor información del proyecto que tiende a la simetría. De esto podemos concluir que en el set de datos la altura de los productos tiende a ser simétrica.
+
+
+# Ejercicio N° 2 - Probabilidad (15 puntos)
+
+Ejercicio 1
+1. Si lanzamos un dado equilibrado de 6 lados, ¿Cuál es la probabilidad esperada de obtener el número
+5?. Si lanzamos el dado 10 veces, ¿Cuál es la cantidad esperada de veces que sale dicho número?
+
+R/ La probabilidad de cada una de las caras de un dado equilibrado corresponde a 1/6, esto significa que cada cara tiene la misma probabilidad de presentarse al momento de lanzar el dado, por tal razón, la probabilidad de obtener el numero 5 es del 1/6.
+Si se lanza el dado equilibrado 10 veces, la probabilidad esperada de obtener el número 5 sería la multiplicación de la cantidad de veces que se lanza el dado por la probabilidad que se obtenga el número deseado:
+10 * (1/6) = 1.67 
+Esto quiere decir que si lanzamos un dado equilibrado 10 veces se tiene la probabilidad de obtener el número 5, una o dos veces de los 10 lanzamientos realizados. Se aclara que el tema de probabilidad se utiliza para predecir resultados a largo plazo, por lo que si realizamos este experimento puede que no se logre la probabilidad estimada, esto por ser un evento con pocas repeticiones, estos eventos son difíciles de predecir y dependen de muchos factores que puedan afectar la prueba ejecutada.
+
+
+2. Lanzar un dado 10 veces y contar el número de veces que sale 5. Repetirlo 15 veces y almacenar la
+cantidad de apariciones de dicho número para cada una.
+
+R/ Como se comenta en el punto anterior, estos eventos se pueden calcular con el número de lanzamientos por la probabilidad de obtener cada cara:
+10 * (1/6) = 1.67 
+Almacenar estos resultados y repetirlo 15 veces mas se puede simular en la herramienta R de la siguiente forma:
+
+```{r}
+# para obtener resultados reproducibles, se crea una semilla
+set.seed(123)
+num_lanzamientos <- 10
+num_simulaciones <- 15
+resultado <- numeric(num_simulaciones)
+for (i in 1:num_simulaciones) {
+  dados_Lanzados <- sample(1:6, num_lanzamientos, replace = TRUE)
+  resultado[i] <- sum(dados_Lanzados == 5)
+  cat("Simulación ", i, ": ", resultado[i], " veces el número 5.\n")
+  cat("  Datos de los 10 lanzamientos", dados_Lanzados, "\n")
+}
+
+```
+
+Como se observa en la salida anterior, se tiene la simulación del lanzamiento de un dado equilibrado 10 veces, repetida durante 15 oportunidades, en la descripción de la salida se observa los resultados obtenidos y el conteo que se realiza dentro de la estructura cíclica para determinar la cantidad del número 5 obtenida. Del experimento realizado se puede contrastar que el número de veces que el número 5 aparece en la prueba es 21 veces, en R se obtendría de la siguiente forma:
+```{r}
+sum(resultado)
+```
+
+
+3. Lanzar el dado 100 veces, contar el número de apariciones de dicho número 5, almacenar el resultado
+y repetirlo 1000 veces.
+
+R/ Con relación al ejercicio anterior se implementa el mismo código y se retira las salidas de cada simulación para obtener solo el resultado final:
+```{r}
+# para obtener resultados reproducibles, se crea una semilla
+set.seed(123) 
+num_lanzamientosEje23 <- 100
+num_simulacionesEje23 <- 1000
+resultadoEje23 <- numeric(num_simulacionesEje23)
+for (i in 1:num_simulacionesEje23) {
+  dados_LanzadosEje23 <- sample(1:6, num_lanzamientosEje23, replace = TRUE)
+  resultadoEje23[i] <- sum(dados_LanzadosEje23 == 5)
+}
+sum(resultadoEje23)
+```
+Como se observa en la salida, la simulación muestra que se obtendrían 16774 veces el número 5, esto al lanzar un dado equilibrado 100 veces y repetir el experimento 1000 veces.
+
+4. ¿Cómo difieren los resultados del experimento en (2) de los resultados en el experimento (3)? Justificar
+
+R/ Los resultados difieren de las cantidades de repeticiones que se realizan en el punto 2 (10 lanzamientos de un dado equilibrado, conteo de la cantidad de veces que aparece el número 5 y repetido 15 veces) y el punto 3 (100 lanzamientos, conteo del número 5 y repetidos 1000 veces). Estas diferencias afectan la precisión y la fiabilidad de los resultados, entre mas lanzamientos y repeticiones haya mas preciso y confiable será la prueba. En tal sentido, los resultados del punto 3 son mas confiables y precisos por tener un mayor número de repeticiones.
+
+Ejercicio 2
+Una persona te propone jugar un juego con dados, el cual te solicita tirar 2 dados.
+• Si sale un 7, te pagarán $ 60
+• Si sale un 6, te pagarán $ 30.
+• Si sale cualquier otra combinación, deberás pagar $ 35
+1. ¿Cuál es la probabilidad de sacar un siete?
+
+R/La probabilidad de sacar un 7 es de 6/36 o 1/6, esto debido a que existen 6 formas de obtener un 7 a través de las siguientes combinaciones:
+
+(1) 1 y 6 = 7
+(2) 2 y 5 = 7
+(3) 3 y 4 = 7
+(4) 4 y 3 = 7
+(5) 5 y 2 = 7
+(6) 6 y 1 = 7
+
+Como se observa para dos dados de seis lados existen seis posibles combinaciones para obtener un 7 y por lo tanto la probabilidad de que ocurra este evento es 1/6.
+
+
+2. ¿Cuál es la probabilidad de sacar un seis?
+
+R/ De la misma forma se podría ver las posibilidades de obtener un número seis a través de las siguientes combinaciones:
+
+(1)	5 y 1 = 6
+(2)	1 y 5 = 6
+(3)	4 y 2 = 6
+(4)	2 y 4 = 6
+(5)	6 y 0 = 6
+(6)	0 y 6 = 6
+(7)	3 y 3 = 6
+
+7/36 probabilidad de sacar un 6 con dos dados.
+
+
+3. ¿Cuál es la probabilidad de sacar un siete o un seis?
+
+R/ La probabilidad de obtener un 7 o 6 con los dos dados será la suma de las probabilidades obtenidas en los puntos anteriores:
+6 (combinaciones de dos dados para obtener un 7) + 7 (combinaciones de dos dados para obtener un 6) = 13
+
+13/36 es la probabilidad de sacar dos dos dados un 6 o un 7.
+
+
+4. Simular tirar 2 dados mediante la función Roll1Dice(). Simular tirar 2 dados 100 veces y almacenar
+los resultados. Calcular los puntos anteriores (1, 2 y 3) a partir de los datos.
+
+R/ Para desarrollar el ejercicio en R se utiliza el siguiente código:
+
+```{r}
+# para obtener resultados reproducibles, se crea una semilla
+set.seed(123) 
+# Se define la función Roll1Dice para simular un dado de seis caras
+Roll1Dice <- function() {
+  return(sample(1:6, 1, replace = TRUE))
+}
+
+funcionLazar2Dados <- function(nrow){
+# Se inicializa una matriz de 100 filas y 2 columnas para almacenar los resultados
+results <- matrix(0, nrow, ncol = 2)
+
+# Se realiza la simulación de lanzar 2 dados 100 veces
+for (i in 1:nrow) {
+  results[i, 1] <- Roll1Dice()
+  results[i, 2] <- Roll1Dice()
+}
+
+# Se imprimen los resultados de lanzar dos dados 100 veces
+return(print(results))
+}
+
+# Se llama la función para presentar los resultados del ejercicio 4:
+ejer4 <- funcionLazar2Dados(100)
+```
+
+```{r}
+# Se utiliza la función para simular los datos del ejercicio 3
+
+resultadoejer3<-0
+for (i in 1:100) {
+  # Se valida si la suma de cada una de las filas es igual a 6 o 7, y se guarda en la variable resultadoejer3
+  resultadoejer3[i] <- sum(ejer4[i,])==6 | sum(ejer4[i,])==7
+  
+}
+sum(resultadoejer3)
+```
+Se observa que al validar la matriz construida de los resultados se obtiene de las 100 muestras 22 pruebas que cumplen la condición de sumar 6 o 7, esto en probabilidad representa 22% de las pruebas (22/100), lo obtenido en el ejercicio 3 mostraba que la probabilidad de obtener un 6 o 7 con dos dados era 36,11% (13/36). Se esperaría que si se aumenta el numero de muestras se acerque a esta probabilidad.
+
+```{r}
+# para obtener resultados reproducibles, se crea una semilla
+set.seed(123)
+# Se utiliza la función para simular los datos del ejercicio 3 con n=10000
+ejer3_10mil <- funcionLazar2Dados(10000)
+resultadoejer3_10mil<-0
+for (i in 1:10000) {
+  # Se valida si la suma de cada una de las filas es igual a 6 o 7, y se guarda en la variable resultadoejer3_10mil
+  resultadoejer3_10mil[i] <- sum(ejer3_10mil[i,])==6 | sum(ejer3_10mil[i,])==7
+  
+}
+probabilidadEjer3_10mil <- sum(resultadoejer3_10mil)/10000
+probabilidadEjer3_10mil
+```
+
+Como se observa la probabilidad se encuentra al rededor del 30% mostrando que se acerca al valor estimado inicialmente.
+
+Para el caso del ejericio 2 se tiene lo siguiente:
+```{r}
+resultadoejer3_10mil<-0
+for (i in 1:10000) {
+  # Se valida si la suma de cada una de las filas es igual a 6, y se guarda en la variable resultadoejer3_10mil
+  resultadoejer3_10mil[i] <- sum(ejer3_10mil[i,])==6
+  
+}
+probabilidadEjer3_10mil <- sum(resultadoejer3_10mil)/10000
+probabilidadEjer3_10mil
+```
+Con relación al ejercicio 2 (7/36) = 0,1944, se obtiene de la simulación 0,1405.
+
+Para el caso del ejercicio 1 se tiene:
+```{r}
+resultadoejer3_10mil<-0
+for (i in 1:10000) {
+  # Se valida si la suma de cada una de las filas es igual a 6, y se guarda en la variable resultadoejer3_10mil
+  resultadoejer3_10mil[i] <- sum(ejer3_10mil[i,])==7
+  
+}
+probabilidadEjer3_10mil <- sum(resultadoejer3_10mil)/10000
+probabilidadEjer3_10mil
+```
+
+Con relación al ejercicio 1 (1/36) = 0,1666, se obtiene de la simulación 0,1595.
+
+
+
+5. Suponga que jugaron 10 veces y obtuvieron una ganancia de $ 300. ¡Qué fácil parece ser el juego!
+¡Debería seguir jugando! ¿Es correcta la suposición? Demostrar con una simulación.
+
+```{r}
+# Simulación de jugar el juego de lanzar dos dados 10 veces
+# para obtener resultados reproducibles, se crea una semilla
+set.seed(123)
+# Se utiliza la función para simular los datos con n=10
+ejer5 <- funcionLazar2Dados(10)
+resultadoejer56<-0
+resultadoejer57<-0
+resultadoejer5dif<-0
+for (i in 1:10) {
+  # Se valida si la suma de cada una de las filas es igual a 6, y se guarda en la variable resultadoejer56
+  resultadoejer56[i] <- sum(ejer5[i,])==6
+  # Se valida si la suma de cada una de las filas es igual a 6, y se guarda en la variable resultadoejer57
+  resultadoejer57[i] <- sum(ejer5[i,])==7
+   # Se valida si la suma de cada una de las filas es diferente a 6 o 7, y se guarda en la variable resultadoejer5dif
+  resultadoejer5dif[i] <- sum(ejer5[i,])!=6 | sum(ejer5[i,])!=7
+  
+}
+pagoNum6 <- sum(resultadoejer56)*60
+pagoNum7 <- sum(resultadoejer57)*30
+menosNumDif67 <- sum(resultadoejer5dif)*35
+
+  # Se calcula la ganancia del juego
+  totalJuego <- pagoNum6+pagoNum7-menosNumDif67
+  
+  totalJuego
+```
+La suposición es incorrecta, la simulación muestra que con la semilla presentada los resultados generan una pérdida de $ 320. No sería prudente seguir jugando.
+
+6. Ahora dicha persona te ofrece disminuir el monto a pagar a $ 20. ¿Deberías aceptarlo?.
+
+R/ Se procede a realizar una simulación para determinar la conveniencia:
+
+```{r}
+# Simulación de jugar el juego de lanzar dos dados 10 veces
+# para obtener resultados reproducibles, se crea una semilla
+set.seed(123)
+# Se utiliza la función para simular los datos con n=10
+ejer5 <- funcionLazar2Dados(10)
+resultadoejer56<-0
+resultadoejer57<-0
+resultadoejer5dif<-0
+for (i in 1:10) {
+  # Se valida si la suma de cada una de las filas es igual a 6, y se guarda en la variable resultadoejer56
+  resultadoejer56[i] <- sum(ejer5[i,])==6
+  # Se valida si la suma de cada una de las filas es igual a 6, y se guarda en la variable resultadoejer57
+  resultadoejer57[i] <- sum(ejer5[i,])==7
+   # Se valida si la suma de cada una de las filas es diferente a 6 o 7, y se guarda en la variable resultadoejer5dif
+  resultadoejer5dif[i] <- sum(ejer5[i,])!=6 | sum(ejer5[i,])!=7
+  
+}
+pagoNum6 <- sum(resultadoejer56)*60
+pagoNum7 <- sum(resultadoejer57)*30
+menosNumDif67 <- sum(resultadoejer5dif)*20
+
+  # Se calcula la ganancia del juego
+  totalJuego <- pagoNum6+pagoNum7-menosNumDif67
+  
+  totalJuego
+```
+Se observa que, aunque se disminuya el valor que hay q pagar con la perdida se seguiría perdiendo en el juego, en esta ocasión por $170.
+
+# Ejercicio N° 3 - Variables Aleatorias (15 puntos)
+
+1. Simular la suma de dos variables normales mediante la función rnorm(x,mu,sigma) en R con media
+igual a 0 y desvío igual a 1. Probar con el tamaño de muestra n = 10 y n = 100. ¿Qué observa si
+grafica ambos objetos?
+
+```{r}
+# Si se toma representativamente la variable normal como n=10 y n=100 se pueder realizar la suma de la siguiente forma
+
+#n=10
+n <- 10
+x <- rnorm(n, mean = 0, sd = 1)
+y <- rnorm(n, mean = 0, sd = 1)
+z <- x + y
+
+#n=100
+n2 <- 100
+x2 <- rnorm(n2, mean = 0, sd = 1)
+y2 <- rnorm(n2, mean = 0, sd = 1)
+z2 <- x2 + y2
+
+```
+
+Para graficar la simulación anterior se utiliza la siguiente codigo:
+
+```{r}
+#Grafica para n=10
+par(mfrow = c(2,2))
+hist(x, main = "Histograma de X (n = 10)")
+hist(y, main = "Histograma de Y (n = 10)")
+hist(z, main = "Histograma de X + Y (n = 10)")
+```
+```{r}
+#Grafica para n=100
+par(mfrow = c(2,2))
+hist(x2, main = "Histograma de X2 (n = 100)")
+hist(y2, main = "Histograma de Y2 (n = 100)")
+hist(z2, main = "Histograma de X2 + Y2 (n = 100)")
+```
+¿Qué observa si grafica ambos objetos?
+R/ Se observa en las gráficas anteriores que las variables normales graficadas individualmente tienden a mostrar una curva normal, al sumarlas sigue esta misma tendencia. Al aumentar las muestras se observa que el parecido a una curva normal perfecta se va observando más definida, si se aumentara el valor de n se vería este aspecto. A continuación, se presenta la simulación con n=10000:
+
+```{r}
+#n=10000
+n3 <- 10000
+x3 <- rnorm(n3, mean = 0, sd = 1)
+y3 <- rnorm(n3, mean = 0, sd = 1)
+z3 <- x3 + y3
+
+#Grafica para n=10000
+par(mfrow = c(2,2))
+hist(x3, main = "Histograma de X3 (n = 10000)")
+hist(y3, main = "Histograma de Y3 (n = 10000)")
+hist(z3, main = "Histograma de X3 + Y3 (n = 10000)")
+```
+2. Simular la suma de dos variables normales mediante la función rnorm(x,mu,sigma) en R con media
+igual a 0 y desvío igual a 1. Probar con distintos valores de tamaño de muestra. Podría probar con n
+= 100, n = 1000, n = 10000, n = 100000. Gráficar para estos distintos valores de muestra. Comprobar
+que la media (valor esperado) es igual a la suma de sus valores esperados y la varianza es igual a la
+suma de varianzas individuales.
+
+```{r}
+#Se presenta codigo de la simulación a través de un bucle
+nEjer32 <- c(100, 1000, 10000, 100000)
+xEjer32 <- list()
+yEjer32 <- list()
+zEjer32 <- list()
+for (i in 1:length(nEjer32)) {
+  xEjer32[[i]] <- rnorm(nEjer32[i], mean = 0, sd = 1)
+  yEjer32[[i]] <- rnorm(nEjer32[i], mean = 0, sd = 1)
+  zEjer32[[i]] <- xEjer32[[i]] + yEjer32[[i]]
+}
+
+#grafica
+par(mfrow = c(3,3))
+for (i in 1:length(nEjer32)) {
+  hist(xEjer32[[i]], main = paste("Histograma de X (n =", nEjer32[i], ")"))
+  hist(yEjer32[[i]], main = paste("Histograma de Y (n =", nEjer32[i], ")"))
+  hist(zEjer32[[i]], main = paste("Histograma de X + Y (n =", nEjer32[i], ")"))
+}
+```
+
+Como se observó en el ejercicio anterior, al graficar cada variable normal se observa que tiende a representar una gráfica normal, al sumarla genera otra grafica normal, para este caso se entiende que la media seria (0+0=0) y su desviación estándar (raíz cuadra de 1 + raíz cuadrada de 1 = raíz cuadrada de 2). Además, se puede comprobar que la media y la desviación corresponden a la suma de las sumas individuales de cada muestra de la siguiente forma:
+
+```{r}
+for (i in 1:length(nEjer32)) {
+  print(paste("Muestra con tamaño", nEjer32[i]))
+  print(paste("Media X =", mean(xEjer32[[i]])))
+  print(paste("Media Y =", mean(yEjer32[[i]])))
+  print(paste("Media X + Y =", mean(zEjer32[[i]])))
+  print(paste("Varianza X =", var(xEjer32[[i]])))
+  print(paste("Varianza Y =", var(yEjer32[[i]])))
+  print(paste("Varianza X + Y =", var(zEjer32[[i]])))
+  print("")
+}
+```
+
+
+3. Simular la suma de diez variables normales mediante la función rnorm en R con media igual a 0 y
+desvío igual a 1. Probar con distintos valores de tamaño de muestra. Podría probar con n = 100, n
+= 1000, n = 10000, n = 100000. Gráficar para estos distintos valores de muestra. Comprobar que la
+media (valor esperado) es igual a la suma de sus valores esperados y la varianza es igual a la suma de
+varianzas individuales.
+
+```{r}
+
+# Function to generate n random normal variables and sum them
+sum_normals <- function(n){
+  return(rowSums(matrix(rnorm(n * 10, mean = 0, sd = 1), ncol = 10)))
+}
+
+# Plot the distribution for different sample sizes
+par(mfrow = c(2, 2))
+hist(sum_normals(100), main = "n = 100")
+hist(sum_normals(1000), main = "n = 1000")
+hist(sum_normals(10000), main = "n = 10000")
+hist(sum_normals(100000), main = "n = 100000")
+
+```
+Para verificar que la media (valor esperado) es igual a la suma de sus valores esperados y la varianza es igual a la suma de varianzas individuales, se puede desarrollar de la siguiente forma:
+
+```{r}
+# Verify that the mean is equal to the sum of individual means
+n <- 100000
+mean(sum_normals(n))
+# Output: -0.0108
+
+# Verify that the variance is equal to the sum of individual variances
+var(sum_normals(n))
+# Output: 10.0297
+```
+Como se observa en la salida, la suma de medias igual 0 resultará en una media igual a cero (0+0+0+...+0=0) y su varianza ( 1 + 1 + .. + 1= 10).
+
+4. Extra: Probar lo anterior pero sumando normales con distintas medias y desvíos.
+
+```{r}
+# Function to generate n random normal variables with different means and standard deviations
+sum_diff_normals <- function(n){
+  means <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+  stds <- c(0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5)
+  normals <- matrix(NA, n, 10)
+  
+  for (i in 1:10){
+    normals[, i] <- rnorm(n, mean = means[i], sd = stds[i])
+  }
+  
+  return(rowSums(normals))
+}
+
+# Plot the distribution for a given sample size
+n <- 100000
+hist(sum_diff_normals(n), main = "Sum of different normal variables")
+```
+
+Como se ha visto en los ejercios anteriores la suma de medias y varianzas de forma individual generan un resultado que sigue siendo normal con media y varianza igual a las sumas individuales.
+
+```{r}
+# Verify that the mean is equal to the sum of individual means
+mean(sum_diff_normals(n))
+
+
+# Verify that the variance is equal to the sum of individual variances
+var(sum_diff_normals(n))
+
+```
+
+
+# Ejercicio N° 4 - Teorema Central del Límite (15 puntos)
+
+En clase hemos visto que la media de variables Normales es una Normal. Ahora bien, ¿Ocurrirá lo mismo si
+las variables que se promedian no son normales?.
+Se plantea el siguiente ejercicio para que intenten resolver, de forma tal que descubran al Teorema Central
+del Límite.
+Repetir el proceso visto en clase mediante R cuando la variable aleatoria original se distribuye de la forma
+siguiente,
+1. Poisson de parámetro λ = 1.5
+2. Exponencial de parámetro μ = 2.5
+3. Uniforme en el intervalo [10,30]
+4. Weibull de parámetros shape = 2 y scale = 1.
+Realizar un Gráfico de Histograma y plotear la densidad de una variable normal para cada caso.
+
+```{r}
+# Function to generate n random variables with a Poisson distribution with parameter lambda = 1.5
+mean_poisson <- function(n){
+  return(mean(rpois(n, lambda = 1.5)))
+}
+
+# Plot the distribution of the mean of Poisson variables
+n <- 100000
+hist(mean_poisson(n), main = "Mean of Poisson variables", xlab = "Value", ylab = "Frequency")
+curve(dnorm(x, mean = 1.5, sd = sqrt(1.5/n)), col = "red", add = TRUE)
+
+# Function to generate n random variables with an Exponential distribution with parameter mu = 2.5
+mean_exponential <- function(n){
+  return(mean(rexp(n, rate = 1/2.5)))
+}
+
+# Plot the distribution of the mean of Exponential variables
+n <- 100000
+hist(mean_exponential(n), main = "Mean of Exponential variables", xlab = "Value", ylab = "Frequency")
+curve(dnorm(x, mean = 2.5, sd = sqrt(2.5/n)), col = "red", add = TRUE)
+
+# Function to generate n random variables with a Uniform distribution between 10 and 30
+mean_uniform <- function(n){
+  return(mean(runif(n, min = 10, max = 30)))
+}
+
+# Plot the distribution of the mean of Uniform variables
+n <- 100000
+hist(mean_uniform(n), main = "Mean of Uniform variables", xlab = "Value", ylab = "Frequency")
+curve(dnorm(x, mean = 20, sd = sqrt(60/12/n)), col = "red", add = TRUE)
+
+# Function to generate n random variables with a Weibull distribution with parameters shape = 2 and scale = 1
+mean_weibull <- function(n){
+  return(mean(rweibull(n, shape = 2, scale = 1)))
+}
+
+# Plot the distribution of the mean of Weibull variables
+n <- 100000
+hist(mean_weibull(n), main = "Mean of Weibull variables", xlab = "Value", ylab = "Frequency")
+curve(dnorm(x, mean = sqrt(pi/2), sd = sqrt((pi - 2)/2/n)), col = "red", add = TRUE)
+```
+Como puedes ver en los gráficos, la distribución de la media de variables aleatorias no necesariamente sigue una distribución normal. Sin embargo, según el Teorema Central del Límite, si la cantidad de variables aleatorias aumenta (es decir, si n se hace grande), la distribución de la media de estas variables se aproxima cada vez más a una distribución normal con media igual a la media de las variables aleatorias y desviación estándar igual a la desviación.
+
+# Ejercicio N° 5 - IC y Prueba de Hipótesis (15 puntos)
+Proceda a cargar el siguiente dataset de un repositorio en github,
+
+```{r}
+
+url = "https://github.com/hllinas/DatosPublicos/blob/main/Estudiantes.Rdata?raw=false"
+repmis::source_data(url)
+datos <- Estudiantes
+```
+
+Realizar los siguientes ejercicios. Interprete todas sus respuestas.
+a) Considerar solamente las observaciones que van desde la 2 hasta la 35 y definir el data frame
+“datos2a35”. Verificar su tamaño, variables y estructura.
+
+```{r}
+# Se seleccionan las observaciones desde la 2 hasta la 35
+datos2a35 <- datos[2:35, ]
+
+# Se Verifica el tamaño del data frame
+dim(datos2a35)
+
+# Se Verifica las variables y estructura
+str(datos2a35)
+```
+
+Todas los puntos siguientes resolverlo con el dataset “datos2a35”,
+b) Definir el objeto “Sexo” (género de los estudiantes). Conviértalo en factor y diga cuáles son sus
+respectivos niveles.
+
+```{r}
+# Se define el objeto "Sexo"
+datos2a35$Sexo <- as.factor(datos2a35$Sexo)
+
+# Se Verifica los niveles del objeto "Sexo"
+levels(datos2a35$Sexo)
+```
+Como se observa en la salida str(datos2a35) la variable sexo era de tipo caracter y para atender la solicitud se convierte en factor y se vuelve asignar al data frame utilizado.
+
+c) Construir una tabla de frecuencias para la variable Sexo y el diagrama de barras correspondiente.
+
+```{r}
+# Se Construye una tabla de frecuencias
+table(datos2a35$Sexo)
+
+# Se Construye un diagrama de barras
+barplot(table(datos2a35$Sexo), xlab="Sexo", ylab="Frecuencia", main="Diagrama de Barras para la Variable Sexo")
+```
+Como se observa en la salida existen un mayor número de estudias categorizados con el sexo femenino (20) que los categorizados como masculinos (14).
+
+d) Determinar la proporción de mujeres.
+
+```{r}
+prop_mujeres <- sum(datos2a35$Sexo == "Femenino")/length(datos2a35$Sexo)
+```
+
+Se observa que la proporción de mujeres corresponde al 58.82%.
+
+e) Mediante el método de la región crítica: Al nivel del 5%, determine si el porcentaje poblacional de
+mujeres es menor o igual que el 30%. Escribir un resumen del enunciado del problema, verificar los
+supuestos, concluya, diga cuál es la fórmula, el valor de prueba, el valor crítico, la región crítica e
+interprete.
+
+R/ Resumen del enunciado del problema:
+Se quiere determinar si el porcentaje poblacional de mujeres es menor o igual que el 30% al nivel del 5% de significancia.
+
+Para realizar una prueba de hipótesis sobre la proporción poblacional de mujeres siendo menor o igual que el 30% con un nivel del 5%, se puede utilizar el método de la región crítica. Los supuestos para realizar esta prueba son:
+
+- La muestra debe ser aleatoria y representativa de la población.
+- Independencia de las muestras: La muestra de mujeres debe ser independiente de la muestra de hombres.
+- Normalidad de la distribución: La distribución de la población de mujeres debe ser normal.
+
+La hipótesis nula H0 sería que la proporción poblacional de mujeres es menor o igual que el 30%, mientras que la hipótesis alternativa Ha sería que la proporción poblacional de mujeres es mayor que el 30%.
+
+Conclusión:
+Si se cumplen los supuestos, se puede utilizar el test Z para determinar si el porcentaje poblacional de mujeres es menor o igual que el 30%.
+
+Fórmula:
+La fórmula para el test Z es:
+$$Z= \frac{\overline{p} - p}{\sqrt{\frac{p(1-p)}{n}}} $$
+Z = (p̂ - p) / (√(p(1-p)/n))
+
+donde:
+
+p̂ es la proporción estimada de la muestra
+p es la proporción de la población
+n es el tamaño de la muestra
+
+```{r}
+#la proporción muestral fue calcalada con anterioridad y fue cargada en la variabel prop_mujeres
+# n de la muestra esta determnado por 34 registros
+# Se carga en la variable p_0 con el valor hipotetico del 30%
+p_0=0.3
+# En tal sentido, la formula seria la siguiente:
+z=(prop_mujeres-p_0)/sqrt(0.3*(1-p_0)/length(datos2a35$Sexo))
+#Se calcula la región critica, teniendo en cuenta que debido a que h0 <= 30% la region critica esta localizada en la zona derecha de la curva normal
+# Se calcula el valor critico
+qnorm(0.95)
+# Valor obtenido de la distribución z
+z
+```
+Con relación a lo resultados obtenidos se puede concluir que hay evidencia suficiente para afirmar que el porcentaje poblacional de mujeres es mayor al 30%, por tal razón, se rechaza la hipótesis nula.
+
+El hecho que el valor calculado sea mayor al crítico indica que se debe rechazar h0.
+
+f) Mediante el método del P-valor: Determine si el porcentaje poblacional de mujeres es menor o igual
+que el 30%. Halle el P-valor, interprete y compare su decisión con el inciso (e).
+
+$$P\mbox{-valor} \; = \; P(Z \;\geq \; z) \; $$  
+para una prueba de una cola a la izquierda.
+para una prueba de una cola a la derecha.
+para una prueba de dos colas.
+
+Para el calculo del P-valor en R se utiliza el siguiente codigo
+
+```{r}
+pValor=1-pnorm(z)
+pValor
+```
+Debido a que el P-valor es menor al nivel de significancia se rechaza la h0, se concluye que no hay evidencia suficiente para afirmar que el porcentaje poblacional de mujeres es menor o igual que el 30%, esta sería la misma medida obtenido a través del método de región critica.
+
+Se recuerda la regla de decisión:
+- Se rechaza H0 cuando P-valor≤α
+- No se rechaza H0 cuando P-valor>α
+
+
+g) Realizar la misma prueba del inciso (h) con la función prop.test y compare los resultados obtenidos.
+
+```{r}
+ejerG <- prop.test(length(datos2a35$Sexo), n=34, p = 0.3, alternative = "greater" )
+ejerG$p.value
+```
+Como se observa en el resultado obtenido, el valor del p-valor sigue siendo menor al nivel de significancia, por esta razón se rechaza h0, como en los ejercicios anteriores.
+
+h) Construir un intervalo del 95% de confianza para la proporción poblacional de mujeres y compare los
+resultados obtenidos en los incisos anteriores.
+
+El intervalo de confianza se puede construir utilizando la siguiente fórmula:
+
+prop_mujeres ± z_alfa/2 * sqrt(prop_mujeres * (1 - prop_mujeres) / n)
+
+donde:
+
+z_alfa/2 es la mitad del valor crítico de la distribución normal estándar para un nivel de confianza del 95%, que es aproximadamente 1.96
+prop_mujeres es la estimación de la proporción de mujeres en la muestra
+n es el número total de estudiantes en la muestra
+
+```{r}
+# Calculo de la varianza de la proporción de mujeres
+var_prop_mujeres <- prop_mujeres * (1 - prop_mujeres) / 34
+
+# Calculao de la desviación estándar de la proporción de mujeres
+sd_prop_mujeres <- sqrt(var_prop_mujeres)
+
+# Calculo del intervalo de confianza del 95%
+ci_lower <- prop_mujeres - 1.96 * sd_prop_mujeres
+ci_upper <- prop_mujeres + 1.96 * sd_prop_mujeres
+
+# Impresión del intervalo de confianza
+ci_lower
+ci_upper
+```
+Como se observa en el resultado obtenido, el intervalo de confianza del 95% arroja que la proporción de las mujeres en la población puede estar entre el rango del 42.28 % - 75.36 %, eso con relación a lo observado en la hipótesis nula, que en los ejercicios anterior esta fue rechazada, informando que no había evidencia suficiente para afirmar que la proporción de las mujeres fuera o estuviera por debajo de 30%.
+
+# Ejercicio N° 6 - Regresión Lineal Simple (15 puntos)
+
+Una analista de deportes quiere saber si existe una relación entre la cantidad de bateos que realiza un equipo
+de béisbol y el número de runs que consigue. En caso de existir y de establecer un modelo, podría predecir
+el resultado del partido.
+
+```{r}
+equipos <- c("Texas","Boston","Detroit","Kansas","St.","New_S.","New_Y.",
+"Milwaukee","Colorado","Houston","Baltimore","Los_An.","Chicago",
+"Cincinnati","Los_P.","Philadelphia","Chicago","Cleveland","Arizona",
+"Toronto","Minnesota","Florida","Pittsburgh","Oakland","Tampa",
+"Atlanta","Washington","San.F","San.I","Seattle")
+numero_bateos <- c(5659, 5710, 5563, 5672, 5532, 5600, 5518, 5447, 5544, 5598,
+5585, 5436, 5549, 5612, 5513, 5579, 5502, 5509, 5421, 5559,
+5487, 5508, 5421, 5452, 5436, 5528, 5441, 5486, 5417, 5421)
+runs <- c(855, 875, 787, 730, 762, 718, 867, 721, 735, 615, 708, 644, 654, 735,
+667, 713, 654, 704, 731, 743, 619, 625, 610, 645, 707, 641, 624, 570,
+593, 556)
+datos <- data.frame(equipos,numero_bateos,runs)
+head(datos)
+```
+
+
+Se solicita responder lo siguiente,
+1) Realizar una visualización gráfica que permita determinar la relación entre ambas variables.
+
+Para esto se puede usar un scatterplot que permita identificar la distribucion de los puntos y determinar la relacion entre ellos, el codigo en R sería el siguiente:
+
+```{r}
+plot(numero_bateos, runs)
+```
+Este gráfico permite ver si existe una relación lineal entre las dos variables y su dirección. Inicialmente se puede ver que existe una relación entre las variables con pendiente positiva.
+
+2) Poner a prueba la conjetura de significancia estadística del coeficiente de correlación lineal poblacional
+entre ambas variables con un nivel de significación del 5%.
+
+Para poner a prueba la conjetura de significancia estadística del coeficiente de correlación lineal poblacional, se puede calcular el coeficiente de correlación Pearson (r) y la prueba t correspondiente. El código en R se presenta a continuación:
+
+```{r}
+cor.test(numero_bateos, runs)
+```
+
+El resultado indica el valor de r y el valor p para la hipótesis nula de que el coeficiente de correlación lineal poblacional es igual a cero. Como se observa el valor p es menor que el nivel de significación establecido (0.05), en tal sentido, se puede rechazar la hipótesis nula y concluir que existe una relación lineal significativa entre las dos variables.
+
+3) Construir un modelo de regresión lineal simple. Identifique la variable respuesta y el regresor del
+modelo. Interpretar los resultados de los parámetros estimados.
+
+Para construir un modelo de regresión lineal simple, se puede usar la función lm(). La variable numero_bateos es el regresor y runs es la variable respuesta. A continuación se presenta el codigo en R:
+
+```{r}
+modelo <- lm(runs ~ numero_bateos, data = datos)
+summary(modelo)
+```
+Los resultados de los parámetros estimados incluyen la intercepta y la pendiente del modelo. La interpretación de estos parámetros nos dice cómo la variable numero_bateos influye en la variable runs. Por ejemplo, un aumento de 1 en numero_bateos se asocia con un aumento en runs de la pendiente estimada, esto basado en la formula de regresión lineal simple ( y_i = \alpha + \beta x_i + \varepsilon_i.)
+
+
+4) Realizar una estimación por intervalos de confianza para la predicción del modelo obtenido con una
+confianza del 95/. Interpretar los resultados.
+
+Para realizar una estimación por intervalos de confianza para la predicción del modelo, se puede utilizar la función predict(). El argumento interval se usa para especificar el intervalo de confianza.
+
+```{r}
+predicciones <- predict(modelo, interval = "confidence", level = 0.95)
+```
+
+Los resultados incluyen los valores inferiores y superiores de los intervalos de confianza para cada observación. Estos intervalos indican la incertidumbre en la predicción del modelo.
+
+5) Incorporar al gráfico del punto 1) el modelo estimado.
+
+Para incorporar el modelo estimado al gráfico del punto 1), se puede usar la función abline().
+```{r}
+plot(numero_bateos, runs)
+abline(modelo, col = "red")
+```
+Este gráfico muestra la línea de regresión superpuesta en el scatterplot.
+
+6) Verificar los supuestos del modelo de regresión lineal.
+
+Los supuestos del modelo de regresión lineal son importantes para garantizar que los resultados obtenidos a partir del modelo sean válidos y fiables. Estos supuestos incluyen:
+
+- Linealidad: La relación entre la variable respuesta y el regresor debe ser lineal.
+
+- Independencia: Las observaciones deben ser independientes entre sí.
+
+- Homocedasticidad: La varianza de los errores debe ser constante en todo el rango del regresor.
+
+- Normalidad: Los errores deben ser normales y tener una distribución normal.
+
+- Ausencia de multicolinealidad: No debe existir una correlación fuerte entre el regresor y otras variables.
+
+En los resultados obtenidos se observa:
+Residual standard error: 66.47 on 28 degrees of freedom
+Multiple R-squared:  0.3729,	Adjusted R-squared:  0.3505 
+F-statistic: 16.65 on 1 and 28 DF,  p-value: 0.0003388
+
+Estos se pueden interpretar de la siguiente forma:
+Residual standard error: El error estándar residual (RSE) es una medida de la variabilidad residual, es decir, la variabilidad de la respuesta que no es explicada por el modelo. Un RSE más pequeño indica un mejor ajuste del modelo. En este caso, el RSE es de 66.47, lo que significa que los residuos tienen una variabilidad moderada.
+
+Multiple R-squared: El R-cuadrado múltiple es una medida de qué tanto el modelo explica la variabilidad de la respuesta. Un R-cuadrado más cercano a 1 indica un mejor ajuste del modelo. En este caso, el R-cuadrado múltiple es de 0.3729, lo que significa que el modelo explica el 37.29% de la variabilidad de los datos.
+
+F-statistic: La estadística F es una medida de qué tanto el modelo es significativo en general. Un valor más grande de F indica un modelo más significativo. En este caso, el valor F es de 16.65, con un p-value de 0.0003388, lo que significa que existe una relación significativa entre las variables en el modelo.
+
